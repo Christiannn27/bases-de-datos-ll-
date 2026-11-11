@@ -1,0 +1,41 @@
+CREATE DATABASE colegio_db; 
+
+CREATE TABLE estudiantes (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    edad INT NOT NULL,
+    grado VARCHAR(20) NOT NULL
+);
+
+CREATE TABLE bitacora_paseo (
+    id SERIAL PRIMARY KEY,
+    estudiante_id INT,
+    accion VARCHAR(50),
+    detalle TEXT,
+    fecha_registro TIMESTAMP
+);
+
+CREATE OR REPLACE FUNCTION fn_registrar_paseo()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO bitacora_paseo (estudiante_id, accion, detalle, fecha_registro)
+    VALUES (
+        NEW.id,
+        'REGISTRO_PASEO',
+        CONCAT('El estudiante ', NEW.nombre, ' del grado ', NEW.grado, ' fue inscrito automáticamente en la lista del paseo escolar.'),
+        NOW()
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_inscripcion_paseo
+AFTER INSERT ON estudiantes
+FOR EACH ROW
+EXECUTE FUNCTION fn_registrar_paseo();
+
+INSERT INTO estudiantes (nombre, edad, grado) 
+VALUES ('Sofía Gómez', 15, '10mo');
+
+INSERT INTO estudiantes (nombre, edad, grado) 
+VALUES ('Mateo Vargas', 16, '11mo');
